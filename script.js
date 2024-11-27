@@ -1,298 +1,206 @@
-javascript:(function () {
-  // Cek apakah tracker sudah ada
-  if (document.getElementById('game-tracker-window')) {
-    return;
-  }
-
-  // Fungsi untuk membuat elemen dengan gaya
-  function createElement(tag, styles = {}) {
-    const el = document.createElement(tag);
-    Object.assign(el.style, {
-      boxSizing: 'border-box',
-      margin: '0',
-      padding: '0',
-      ...styles
-    });
-    return el;
-  }
-
-  // Container utama
-  const trackerContainer = createElement('div', {
-    position: 'fixed',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: '90%',
-    maxWidth: '350px',
-    backgroundColor: '#ffffff',
-    borderRadius: '12px',
-    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-    fontFamily: 'Arial, sans-serif',
-    border: '1px solid #e0e0e0',
-    zIndex: '10000',
-    padding: '20px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '15px'
-  });
-  trackerContainer.id = 'game-tracker-window';
-
-  // Header
-  const header = createElement('div', {
-    fontSize: '20px',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#333',
-    borderBottom: '1px solid #f0f0f0',
-    paddingBottom: '10px',
-    width: '100%',
-    margin: '0 0 10px 0'
-  });
-  header.textContent = 'Game Tracker';
-
-  // Tombol tutup
-  const closeButton = createElement('button', {
-    position: 'absolute',
-    top: '10px',
-    right: '10px',
-    background: 'none',
-    border: 'none',
-    color: '#888',
-    fontSize: '24px',
-    cursor: 'pointer',
-    lineHeight: '1',
-    padding: '0',
-    zIndex: '10'
-  });
-  closeButton.textContent = '×';
-  
-  closeButton.addEventListener('click', () => {
-    document.body.removeChild(trackerContainer);
-  });
-
-  // Header wrapper untuk positioning tombol close
-  const headerWrapper = createElement('div', {
-    position: 'relative',
-    width: '100%',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center'
-  });
-  headerWrapper.appendChild(header);
-  headerWrapper.appendChild(closeButton);
-  trackerContainer.appendChild(headerWrapper);
-
-  // Container skor
-  const scoreContainer = createElement('div', {
-    display: 'flex',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: '10px'
-  });
-
-  // Fungsi buat counter
-  function createScoreCounter(label, color) {
-    const counterEl = createElement('div', {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      width: '45%'
-    });
-
-    const labelEl = createElement('span', {
-      fontSize: '14px',
-      color: color,
-      marginBottom: '5px'
-    });
-    labelEl.textContent = label;
-
-    const valueEl = createElement('span', {
-      fontSize: '24px',
-      fontWeight: 'bold',
-      color: color
-    });
-    valueEl.id = `${label.toLowerCase()}Count`;
-    valueEl.textContent = '0';
-
-    counterEl.appendChild(labelEl);
-    counterEl.appendChild(valueEl);
-    return counterEl;
-  }
-
-  const winCounter = createScoreCounter('Win', '#28a745');
-  const loseCounter = createScoreCounter('Lose', '#dc3545');
-  
-  scoreContainer.appendChild(winCounter);
-  scoreContainer.appendChild(loseCounter);
-  trackerContainer.appendChild(scoreContainer);
-
-  // Container tombol
-  const buttonContainer = createElement('div', {
-    display: 'flex',
-    justifyContent: 'space-between',
-    gap: '10px',
-    width: '100%'
-  });
-
-  // Fungsi buat tombol
-  function createButton(text, color, onClick) {
-    const button = createElement('button', {
-      flex: '1',
-      padding: '10px',
-      backgroundColor: color,
-      color: 'white',
-      border: 'none',
-      borderRadius: '6px',
-      fontSize: '14px',
-      cursor: 'pointer',
-      transition: 'opacity 0.2s'
-    });
-    button.textContent = text;
-    
-    button.addEventListener('click', onClick);
-    button.addEventListener('mouseenter', () => button.style.opacity = '0.9');
-    button.addEventListener('mouseleave', () => button.style.opacity = '1');
-    
-    return button;
-  }
-
-  let winCount = 0;
-  let loseCount = 0;
-
-  const winButton = createButton('Win', '#28a745', () => {
-    winCount++;
-    document.getElementById('winCount').textContent = winCount;
-  });
-
-  const loseButton = createButton('Lose', '#dc3545', () => {
-    loseCount++;
-    document.getElementById('loseCount').textContent = loseCount;
-  });
-
-  const resetButton = createButton('Reset', '#007bff', () => {
-    winCount = 0;
-    loseCount = 0;
-    document.getElementById('winCount').textContent = winCount;
-    document.getElementById('loseCount').textContent = loseCount;
-  });
-
-  buttonContainer.appendChild(winButton);
-  buttonContainer.appendChild(loseButton);
-  buttonContainer.appendChild(resetButton);
-  trackerContainer.appendChild(buttonContainer);
-
-  // Fitur drag
-  let isDragging = false;
-  let startX, startY, initialLeft, initialTop;
-  
-  function startDrag(e) {
-    // Hindari drag jika mengklik tombol close
-    if (e.target === closeButton) return;
-  
-    isDragging = true;
-    const touch = e.touches ? e.touches[0] : e;
-    startX = touch.clientX;
-    startY = touch.clientY;
-    initialLeft = trackerContainer.offsetLeft;
-    initialTop = trackerContainer.offsetTop;
-    trackerContainer.style.cursor = 'grabbing';
-  }
-  
-  function drag(e) {
-    if (!isDragging) return;
-  
-    const touch = e.touches ? e.touches[0] : e;
-    const dx = touch.clientX - startX;
-    const dy = touch.clientY - startY;
-  
-    trackerContainer.style.left = `${initialLeft + dx}px`;
-    trackerContainer.style.top = `${initialTop + dy}px`;
-    trackerContainer.style.transform = 'none';
-  }
-  
-  function stopDrag() {
-    isDragging = false;
-    trackerContainer.style.cursor = 'move';
-  }
-  
-  // Event listeners untuk mouse dan touchscreen
-  trackerContainer.addEventListener('mousedown', startDrag);
-  trackerContainer.addEventListener('touchstart', startDrag);
-  
-  document.addEventListener('mousemove', drag);
-  document.addEventListener('touchmove', drag);
-  
-  document.addEventListener('mouseup', stopDrag);
-  document.addEventListener('touchend', stopDrag);
-  // Tambahkan ke body
-  document.body.appendChild(trackerContainer);
-
-  // Media query sederhana untuk perangkat mobile
-  const mediaQuery = window.matchMedia('(max-width: 480px)');
-  
-  function handleMediaQuery(e) {
-    if (e.matches) {
-      trackerContainer.style.width = '95%';
-      trackerContainer.style.maxWidth = '95%';
-      header.style.fontSize = '18px';
-      
-      [winButton, loseButton, resetButton].forEach(btn => {
-        btn.style.fontSize = '12px';
-        btn.style.padding = '8px';
-      });
-    } else {
-      trackerContainer.style.width = '90%';
-      trackerContainer.style.maxWidth = '350px';
-      header.style.fontSize = '20px';
-      
-      [winButton, loseButton, resetButton].forEach(btn => {
-        btn.style.fontSize = '14px';
-        btn.style.padding = '10px';
-      });
+function() {
+    // Global Variable
+    let winCount = 0;
+    let loseCount = 0;
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let xOffset = 0;
+    let yOffset = 0;
+    // Main Container
+    function createMainContainer() {
+        let container = document.createElement('div');
+        container.style.position = 'absolute';
+        container.style.width = '250px';
+        container.style.height = '200px';
+        container.style.backgroundColor = 'white';
+        container.style.borderRadius = '12px';
+        container.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.1)';
+        container.style.border = '1px solid #e1e4e8';
+        container.style.cursor = 'move';
+        container.style.zIndex = '1000';
+        container.style.top = '50px';
+        container.style.left = '50px';
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.fontFamily = '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif';
+        container.style.transition = 'all 0.3s ease';
+        container.style.overflow = 'hidden';
+        return container;
     }
-  }
+    // Header
+    function createHeader() {
+        let header = document.createElement('div');
+        header.style.width = '100%';
+        header.style.padding = '15px';
+        header.style.background = 'linear-gradient(135deg, #4a90e2, #50c878)';
+        header.style.color = '#ffffff';
+        header.style.textAlign = 'center';
+        header.style.fontSize = '18px';
+        header.style.fontWeight = '600';
+        header.style.letterSpacing = '0.5px';
+        header.style.cursor = 'move';
+        header.textContent = 'Win/Lose Counter';
+        return header;
+    }
+    // Button
+    function createStyledButton(text, bgColor, hoverColor, onClickCallback) {
+        let button = document.createElement('button');
+        button.style.padding = '12px 22px';
+        button.style.border = 'none';
+        button.style.borderRadius = '8px';
+        button.style.color = 'white';
+        button.style.fontSize = '12px';
+        button.style.fontWeight = '500';
+        button.style.backgroundColor = bgColor;
+        button.style.cursor = 'pointer';
+        button.style.transition = 'background-color 0.2s ease, transform 0.1s ease';
+        button.textContent = text;
+        // click and hover effect
+        button.addEventListener('mouseenter', () => {
+            button.style.backgroundColor = hoverColor;
+        });
+        button.addEventListener('mouseleave', () => {
+            button.style.backgroundColor = bgColor;
+        });
+        button.addEventListener('mousedown', () => {
+            button.style.transform = 'scale(0.95)';
+        });
+        button.addEventListener('mouseup', () => {
+            button.style.transform = 'scale(1)';
+        });
+        button.addEventListener('click', onClickCallback);
+        return button;
+    }
+    // Button Container
+    function createButtonContainer() {
+        let buttonContainer = document.createElement('div');
+        buttonContainer.style.display = 'flex';
+        buttonContainer.style.justifyContent = 'center';
+        buttonContainer.style.gap = '15px';
+        buttonContainer.style.backgroundColor = '#ffffff';
+        return buttonContainer;
+    }
+    // Score El
+    function createScoreElement(text, color) {
+        let score = document.createElement('div');
+        score.style.textAlign = 'center';
+        score.style.color = color;
+        score.style.fontSize = '20px';
+        score.style.fontWeight = '600';
+        score.style.display = 'flex';
+        score.style.flexDirection = 'column';
+        score.style.alignItems = 'center';
+        let label = document.createElement('span');
+        label.textContent = text.split(': ')[0];
+        label.style.fontSize = '14px';
+        label.style.color = '#6c757d';
+        label.style.marginBottom = '5px';
+        let value = document.createElement('span');
+        value.textContent = text.split(': ')[1];
+        score.appendChild(label);
+        score.appendChild(value);
+        return score;
+    }
+    // Score Container
+    function createScoreContainer() {
+        let scoreContainer = document.createElement('div');
+        scoreContainer.style.display = 'flex';
+        scoreContainer.style.justifyContent = 'space-around';
+        scoreContainer.style.padding = '20px';
+        return scoreContainer;
+    }
+    // Get Coordinate
+    function getCoordinates(e) {
+        return e.type.includes('mouse') ? {
+            x: e.clientX,
+            y: e.clientY
+        } : {
+            x: e.touches[0].clientX,
+            y: e.touches[0].clientY
+        };
+    }
+    // Drag func
+    function setupDragFunctionality(container) {
+        // Event listener for mouse
+        container.addEventListener('mousedown', (e) => {
+            if(e.target.tagName === 'BUTTON') return;
+            const coords = getCoordinates(e);
+            initialX = coords.x - xOffset;
+            initialY = coords.y - yOffset;
+            isDragging = true;
+        });
+        document.addEventListener('mousemove', (e) => {
+            if(!isDragging) return;
+            e.preventDefault();
+            const coords = getCoordinates(e);
+            currentX = coords.x - initialX;
+            currentY = coords.y - initialY;
+            xOffset = currentX;
+            yOffset = currentY;
+            container.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+        });
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        // Event listener for touch
+        container.addEventListener('touchstart', (e) => {
+            if(e.target.tagName === 'BUTTON') return;
+            const coords = getCoordinates(e);
+            initialX = coords.x - xOffset;
+            initialY = coords.y - yOffset;
+            isDragging = true;
+        });
+        document.addEventListener('touchmove', (e) => {
+            if(!isDragging) return;
+            e.preventDefault();
+            const coords = getCoordinates(e);
+            currentX = coords.x - initialX;
+            currentY = coords.y - initialY;
+            xOffset = currentX;
+            yOffset = currentY;
+            container.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+        }, {
+            passive: false
+        });
+        document.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+    }
 
-  mediaQuery.addListener(handleMediaQuery);
-  handleMediaQuery(mediaQuery);
-  const resizeHandle = createElement('div', {
-    position: 'absolute',
-    bottom: '0',
-    right: '0',
-    width: '20px',
-    height: '20px',
-    backgroundColor: 'rgba(0,0,0,0)',
-    cursor: 'nwse-resize',
-    zIndex: '10',
-  });
-  trackerContainer.appendChild(resizeHandle);
-
-  let isResizing = false;
-
-  resizeHandle.addEventListener('mousedown', (e) => {
-    isResizing = true;
-    startX = e.clientX;
-    startY = e.clientY;
-    startWidth = trackerContainer.offsetWidth;
-    startHeight = trackerContainer.offsetHeight;
-
-    document.addEventListener('mousemove', resize);
-    document.addEventListener('mouseup', stopResize);
-  });
-
-  function resize(e) {
-    if (!isResizing) return;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    trackerContainer.style.width = `${startWidth + dx}px`;
-    trackerContainer.style.height = `${startHeight + dy}px`;
-  }
-
-  function stopResize() {
-    isResizing = false;
-    document.removeEventListener('mousemove', resize);
-    document.removeEventListener('mouseup', stopResize);
-  }
-
-  // Tambahkan ke body
-  document.body.appendChild(trackerContainer);
-})();
+    function initGameTracker() {
+        const container = createMainContainer();
+        const header = createHeader();
+        container.appendChild(header);
+        const scoreContainer = createScoreContainer();
+        const scoreWin = createScoreElement("Win: 0", "#2ecc71");
+        const scoreLose = createScoreElement("Lose: 0", "#e74c3c");
+        scoreContainer.appendChild(scoreWin);
+        scoreContainer.appendChild(scoreLose);
+        const buttonContainer = createButtonContainer();
+        const buttonGreen = createStyledButton("Win", "#2ecc71", "#27ae60", () => {
+            winCount++;
+            scoreWin.querySelector('span:last-child').textContent = winCount;
+        });
+        const buttonRed = createStyledButton("Lose", "#e74c3c", "#c0392b", () => {
+            loseCount++;
+            scoreLose.querySelector('span:last-child').textContent = loseCount;
+        });
+        const buttonBlue = createStyledButton("Reset", "#3498db", "#2980b9", () => {
+            winCount = 0;
+            loseCount = 0;
+            scoreWin.querySelector('span:last-child').textContent = winCount;
+            scoreLose.querySelector('span:last-child').textContent = loseCount;
+        });
+        buttonContainer.appendChild(buttonGreen);
+        buttonContainer.appendChild(buttonRed);
+        buttonContainer.appendChild(buttonBlue);
+        container.appendChild(scoreContainer);
+        container.appendChild(buttonContainer);
+        setupDragFunctionality(container);
+        document.body.appendChild(container);
+    }
+    initGameTracker();
+}
