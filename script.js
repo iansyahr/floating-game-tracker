@@ -184,39 +184,46 @@ javascript:(function () {
   // Fitur drag
   let isDragging = false;
   let startX, startY, initialLeft, initialTop;
-
-  trackerContainer.addEventListener('mousedown', startDrag);
-  document.addEventListener('mousemove', drag);
-  document.addEventListener('mouseup', stopDrag);
-
+  
   function startDrag(e) {
     // Hindari drag jika mengklik tombol close
     if (e.target === closeButton) return;
-
+  
     isDragging = true;
-    startX = e.clientX;
-    startY = e.clientY;
+    const touch = e.touches ? e.touches[0] : e;
+    startX = touch.clientX;
+    startY = touch.clientY;
     initialLeft = trackerContainer.offsetLeft;
     initialTop = trackerContainer.offsetTop;
     trackerContainer.style.cursor = 'grabbing';
   }
-
+  
   function drag(e) {
     if (!isDragging) return;
-    
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    
+  
+    const touch = e.touches ? e.touches[0] : e;
+    const dx = touch.clientX - startX;
+    const dy = touch.clientY - startY;
+  
     trackerContainer.style.left = `${initialLeft + dx}px`;
     trackerContainer.style.top = `${initialTop + dy}px`;
     trackerContainer.style.transform = 'none';
   }
-
+  
   function stopDrag() {
     isDragging = false;
     trackerContainer.style.cursor = 'move';
   }
-
+  
+  // Event listeners untuk mouse dan touchscreen
+  trackerContainer.addEventListener('mousedown', startDrag);
+  trackerContainer.addEventListener('touchstart', startDrag);
+  
+  document.addEventListener('mousemove', drag);
+  document.addEventListener('touchmove', drag);
+  
+  document.addEventListener('mouseup', stopDrag);
+  document.addEventListener('touchend', stopDrag);
   // Tambahkan ke body
   document.body.appendChild(trackerContainer);
 
